@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Game</title>
+
+  <style>
+
+    body{
+      font-family: Arial;
+      background:#111827;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      margin:0;
+    }
+
+    .wrap{
+      width:700px;
+    }
+
+    .card{
+      background:#1f2937;
+      padding:30px;
+      border-radius:20px;
+    }
+
+    button{
+      cursor:pointer;
+    }
+
+    .btn-start,
+    .btn-choi-lai{
+      padding:12px 25px;
+      border:none;
+      border-radius:10px;
+      background:#4f46e5;
+      color:white;
+      font-size:16px;
+    }
+
+    .opt-btn{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border:none;
+      border-radius:10px;
+      background:#374151;
+      color:white;
+      text-align:left;
+    }
+
+    .opt-btn:hover{
+      background:#4b5563;
+    }
+
+    .dung{
+      background:green !important;
+    }
+
+    .sai{
+      background:red !important;
+    }
+
+    .prog-track{
+      width:100%;
+      height:10px;
+      background:#374151;
+      border-radius:20px;
+      overflow:hidden;
+      margin-bottom:20px;
+    }
+
+    .prog-bar{
+      height:100%;
+      background:#6366f1;
+      width:0%;
+    }
+
+    .dong-ho{
+      margin:15px 0;
+      font-size:20px;
+    }
+
+    .canh-bao{
+      color:yellow;
+    }
+
+    .nguy-hiem{
+      color:red;
+    }
+
+    #manHinhCauHoi,
+    #manHinhKetQua{
+      display:none;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <!-- START -->
+  <div id="manHinhStart" class="card">
+
+    <h1>🎮 Quiz Game</h1>
+
+    <p>Trò chơi đố vui JavaScript</p>
+
+    <button class="btn-start" onclick="batDau()">
+      ▶ Bắt đầu
+    </button>
+
+  </div>
+
+  <!-- CÂU HỎI -->
+  <div id="manHinhCauHoi" class="card">
+
+    <div id="badgeSoCau"></div>
+
+    <div class="dong-ho" id="dongHo">
+      ⏱ <span id="soGiay">15</span>s
+    </div>
+
+    <div class="prog-track">
+      <div class="prog-bar" id="progBar"></div>
+    </div>
+
+    <h2 id="cauHoiText"></h2>
+
+    <div id="khuvucDapAn"></div>
+
+    <div id="phanHoi"></div>
+
+  </div>
+
+  <!-- KẾT QUẢ -->
+  <div id="manHinhKetQua" class="card">
+
+    <h1>Kết quả</h1>
+
+    <h2>
+      Điểm:
+      <span id="scoreNum">0</span>/10
+    </h2>
+
+    <p id="pctTxt"></p>
+
+    <p id="nhanXet"></p>
+
+    <button class="btn-choi-lai" onclick="choiLai()">
+      🔁 Chơi lại
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+
+  var questions = [
+    {
+      question: "JavaScript được phát triển bởi ai?",
+      options: ["Bill Gates", "Brendan Eich", "Linus Torvalds", "Tim Berners-Lee"],
+      answer: "Brendan Eich"
+    },
+    {
+      question: "Phương thức nào dùng để hiển thị hộp thoại thông báo trong JavaScript?",
+      options: ["console.log()", "document.write()", "alert()", "prompt()"],
+      answer: "alert()"
+    },
+    {
+      question: "DOM là viết tắt của cụm từ nào?",
+      options: ["Data Object Model", "Document Object Model", "Document Oriented Mode", "Data Oriented Module"],
+      answer: "Document Object Model"
+    },
+    {
+      question: "Phương thức nào dùng để chuyển chuỗi thành số nguyên trong JavaScript?",
+      options: ["Number()", "parseFloat()", "parseInt()", "toInt()"],
+      answer: "parseInt()"
+    },
+    {
+      question: "Vòng lặp nào trong JavaScript đảm bảo chạy ít nhất 1 lần?",
+      options: ["for", "while", "do...while", "for...of"],
+      answer: "do...while"
+    },
+    {
+      question: "HTML là viết tắt của cụm từ nào?",
+      options: ["HyperText Makeup Language", "HyperText Markup Language", "HyperTool Markup Language", "HyperText Model Language"],
+      answer: "HyperText Markup Language"
+    },
+    {
+      question: "Phương thức nào dùng để tìm phần tử theo ID trong DOM?",
+      options: ["querySelector()", "getElementById()", "getElement()", "findById()"],
+      answer: "getElementById()"
+    },
+    {
+      question: "CSS là viết tắt của cụm từ nào?",
+      options: ["Computer Style Sheets", "Colorful Style Sheets", "Cascading Style Sheets", "Creative Style Sheets"],
+      answer: "Cascading Style Sheets"
+    },
+    {
+      question: "Kiểu dữ liệu nào trong JavaScript dùng để lưu một danh sách các phần tử?",
+      options: ["Object", "Array", "String", "Number"],
+      answer: "Array"
+    },
+    {
+      question: "Hàm nào trong JavaScript dùng để làm tròn số xuống?",
+      options: ["Math.round()", "Math.ceil()", "Math.floor()", "Math.abs()"],
+      answer: "Math.floor()"
+    }
+  ];
+
+  var cauHienTai = 0;
+  var diem = 0;
+  var timerId = null;
+  var thoiGian = 15;
+
+  function hienManHinh(id){
+
+    document.getElementById("manHinhStart").style.display = "none";
+    document.getElementById("manHinhCauHoi").style.display = "none";
+    document.getElementById("manHinhKetQua").style.display = "none";
+
+    document.getElementById(id).style.display = "block";
+
+  }
+
+  function batDau(){
+
+    stopTimer();
+
+    cauHienTai = 0;
+    diem = 0;
+
+    hienManHinh("manHinhCauHoi");
+
+    hienThiCau(0);
+
+  }
+
+  function hienThiCau(i){
+
+    var q = questions[i];
+
+    document.getElementById("progBar").style.width =
+      ((i + 1) / questions.length * 100) + "%";
+
+    document.getElementById("badgeSoCau").textContent =
+      "Câu " + (i + 1) + " / " + questions.length;
+
+    document.getElementById("cauHoiText").textContent =
+      q.question;
+
+    document.getElementById("phanHoi").textContent = "";
+
+    document.getElementById("khuvucDapAn").innerHTML = "";
+
+    q.options.forEach(function(opt){
+
+      var btn = document.createElement("button");
+
+      btn.className = "opt-btn";
+
+      btn.textContent = opt;
+
+      btn.onclick = function(){
+        kiemTraDapAn(opt, q);
+      };
+
+      document.getElementById("khuvucDapAn").appendChild(btn);
+
+    });
+
+    startTimer();
+
+  }
+
+  function startTimer(){
+
+    stopTimer();
+
+    thoiGian = 15;
+
+    capNhatDongHo();
+
+    timerId = setInterval(function(){
+
+      thoiGian--;
+
+      capNhatDongHo();
+
+      if(thoiGian <= 0){
+
+        stopTimer();
+
+        var buttons = document.querySelectorAll(".opt-btn");
+
+        buttons.forEach(function(btn){
+
+          if(btn.textContent === questions[cauHienTai].answer){
+            btn.classList.add("dung");
+          }
+
+          btn.disabled = true;
+
+        });
+
+        document.getElementById("phanHoi").textContent ="⏰ Hết giờ!";
+
+        setTimeout(function()
+        {
+          chuyenCau()
+        },1200)
+
+      }
+
+    },1000)
+
+  }
+
+  function stopTimer()
+  {
+
+    if(timerId !== null)
+    {
+      clearInterval(timerId)
+    }
+    timerId = null
+  }
+  function capNhatDongHo()
+  {
+    document.getElementById("soGiay").textContent = thoiGian
+    var dongHo = document.getElementById("dongHo")
+    dongHo.classList.remove("canh-bao")
+    dongHo.classList.remove("nguy-hiem")
+    if(thoiGian <= 5)
+    {
+      dongHo.classList.add("nguy-hiem")
+    }
+    else if(thoiGian <= 8)
+    {
+      dongHo.classList.add("canh-bao")
+    }
+  }
+  function kiemTraDapAn(chon, q)
+  {
+    stopTimer()
+    var buttons = document.querySelectorAll(".opt-btn")
+    buttons.forEach(function(btn)
+    {
+      btn.disabled = true;
+      if(btn.textContent === q.answer)
+      {
+        btn.classList.add("dung")
+      }
+      if(btn.textContent === chon && chon !== q.answer)
+      {
+        btn.classList.add("sai");
+      }
+    })
+    if(chon === q.answer)
+    {
+      diem++;
+      document.getElementById("phanHoi").textContent = "✅ Đúng rồi!"
+    }
+    else
+    {
+      document.getElementById("phanHoi").textContent ="❌ Sai rồi!"
+    }
+    setTimeout(function()
+    {
+      chuyenCau()
+    },1000)
+  }
+  function chuyenCau()
+  {
+    cauHienTai++;
+    if(cauHienTai < questions.length)
+    {
+      hienThiCau(cauHienTai)
+    }
+    else
+    {
+      stopTimer()
+      hienKetQua()
+    }
+  }
+  function hienKetQua()
+  {
+
+    hienManHinh("manHinhKetQua")
+    var pct = Math.round(diem / questions.length * 100)
+
+    document.getElementById("scoreNum").textContent =diem
+
+    document.getElementById("pctTxt").textContent ="Tỉ lệ đúng: " + pct + "%"
+
+    var nhanXet = ""
+
+    if(diem <= 4)
+    {
+      nhanXet = "Cần cố gắng thêm nhé! 💪"
+    }
+    else if(diem <= 7)
+    {
+      nhanXet = "Khá tốt! 👍"
+    }
+    else if(diem <= 9)
+    {
+      nhanXet = "Rất giỏi! 🌟"
+    }
+    else
+    {
+      nhanXet = "Xuất sắc! 🏆"
+    }
+    document.getElementById("nhanXet").textContent = nhanXet
+  }
+  function choiLai()
+  {
+    batDau()
+  }
+</script>
+</body>
+</html>
